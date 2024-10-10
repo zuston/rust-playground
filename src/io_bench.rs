@@ -51,6 +51,13 @@ fn main() {
 fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> anyhow::Result<()> {
     let cores = std::thread::available_parallelism().unwrap();
 
+    fn creat_file(file_path: &str) {
+        if !std::path::Path::new(file_path).exists() {
+            println!("creating file: {}", file_path);
+            let _ = std::fs::File::create(file_path);
+        }
+    }
+
     let now = Instant::now();
     let mut handles = vec![];
     for idx in 0..usize::from(cores) {
@@ -58,7 +65,8 @@ fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> a
         let batch_bytes = batch_bytes.clone();
 
         let handle = std::thread::spawn(move || {
-            let file_path = format!("{:?}/{}.std_thread_buffer_io.file", &data_dir, idx);
+            let file_path = format!("{}/{}.std_thread_buffer_io.file", &data_dir, idx);
+            creat_file(&file_path);
             let file = std::fs::OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -86,6 +94,22 @@ fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> 
         .worker_threads(usize::from(cores))
         .enable_all().build()?;
 
+    async fn create_file(data_path: &str) -> anyhow::Result<()> {
+        println!("creating file: {:?}", data_path);
+        let file_path = data_path;
+        match tokio::fs::metadata(file_path).await {
+            Ok(_) => {
+            }
+            Err(e) if e.kind() == tokio::io::ErrorKind::NotFound => {
+                let _ = tokio::fs::File::create(file_path).await?;
+            }
+            Err(e) => {
+
+            }
+        }
+        Ok(())
+    }
+
     let now = Instant::now();
     let counter = Arc::new(AtomicUsize::new(0));
     for idx in 0..usize::from(cores) {
@@ -93,9 +117,9 @@ fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> 
         let batch_bytes = batch_bytes.clone();
         let counter = counter.clone();
         runtime.spawn(async move {
-            let file_path = format!("{:?}/{}.tokio_async_buffer_io.file", &data_dir, idx);
+            let file_path = format!("{}/{}.tokio_async_buffer_io.file", &data_dir, idx);
+            let _ = create_file(&file_path).await;
             let file = tokio::fs::OpenOptions::new()
-                .create(true)
                 .append(true)
                 .open(file_path)
                 .await.unwrap();
