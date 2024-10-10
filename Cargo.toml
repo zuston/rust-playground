@@ -1,0 +1,14 @@
+[package]
+name = "rust-playground"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "io_bench"
+path = "src/io_bench.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = { version = "1" }
+bytes = { version = "1" }
+clap = "3.0.14"
