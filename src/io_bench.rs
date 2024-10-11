@@ -25,37 +25,43 @@ fn main() {
             Arg::with_name("io_bench_type")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("concurrency")
+                .takes_value(true),
+        )
         .get_matches();
 
     let data_path = cli.value_of("data_path").unwrap();
     let epoch: usize = cli.value_of("epoch").unwrap().parse().unwrap();
     let batch_bytes: usize = cli.value_of("batch_bytes").unwrap().parse().unwrap();
     let batch_bytes = Bytes::from(vec![0; batch_bytes]);
+    let concurrency: usize = cli.value_of("concurrency").unwrap().parse().unwrap();
 
     let io_bench_type = cli.value_of("io_bench_type").unwrap();
     if io_bench_type == "std_thread_buffer_io" {
         println!("io bench: [std_thread_buffer_io]");
-        let _ = std_thread_buffer_io(epoch, batch_bytes, data_path.to_string());
+        let _ = std_thread_buffer_io(epoch, batch_bytes, data_path.to_string(), concurrency);
         return;
     }
 
     if io_bench_type == "tokio_async_buffer_io" {
         println!("io bench: [tokio_async_buffer_io]");
-        let _ = tokio_async_buffer_io(epoch, batch_bytes, data_path.to_string());
+        let _ = tokio_async_buffer_io(epoch, batch_bytes, data_path.to_string(), concurrency);
         return;
     }
 
     if io_bench_type == "opendal_async_buffer_io" {
         println!("io bench: [opendal_async_buffer_io]");
-        let _ = opendal_async_buffer_io(epoch, batch_bytes, data_path.to_string());
+        let _ = opendal_async_buffer_io(epoch, batch_bytes, data_path.to_string(), concurrency);
         return;
     }
 
     println!("Unknown IO type");
 }
 
-fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> anyhow::Result<()> {
-    let cores = std::thread::available_parallelism().unwrap();
+fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+    let cores = std::thread::available_parallelism().unwrap().get();
+    let cores = concurrency;
 
     fn creat_file(file_path: &str) {
         if !std::path::Path::new(file_path).exists() {
@@ -94,8 +100,10 @@ fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> a
     Ok(())
 }
 
-fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> anyhow::Result<()> {
-    let cores = std::thread::available_parallelism().unwrap();
+fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+    let cores = std::thread::available_parallelism().unwrap().get();
+    let cores = concurrency;
+
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(usize::from(cores))
         .enable_all().build()?;
@@ -148,7 +156,7 @@ fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -
     }
 
     loop {
-        if counter.load(Ordering::SeqCst) == cores.get() {
+        if counter.load(Ordering::SeqCst) == cores {
             break;
         }
         sleep(Duration::from_millis(100));
@@ -158,10 +166,12 @@ fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -
     Ok(())
 }
 
-fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> anyhow::Result<()> {
-    let cores = std::thread::available_parallelism().unwrap();
+fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+    let cores = std::thread::available_parallelism().unwrap().get();
+    let cores = concurrency;
+
     let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(usize::from(cores))
+        .worker_threads(cores)
         .enable_all().build()?;
 
     async fn create_file(data_path: &str) -> anyhow::Result<()> {
@@ -182,7 +192,7 @@ fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> 
 
     let now = Instant::now();
     let counter = Arc::new(AtomicUsize::new(0));
-    for idx in 0..usize::from(cores) {
+    for idx in 0..cores {
         let data_dir = data_dir.to_string();
         let batch_bytes = batch_bytes.clone();
         let counter = counter.clone();
@@ -206,7 +216,7 @@ fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> 
     }
 
     loop {
-        if counter.load(Ordering::SeqCst) == cores.get() {
+        if counter.load(Ordering::SeqCst) == cores {
             break;
         }
         sleep(Duration::from_millis(100));
