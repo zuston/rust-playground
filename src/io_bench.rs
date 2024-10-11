@@ -45,6 +45,12 @@ fn main() {
         return;
     }
 
+    if io_bench_type == "opendal_async_buffer_io" {
+        println!("io bench: [opendal_async_buffer_io]");
+        let _ = opendal_async_buffer_io(epoch, batch_bytes, data_path.to_string());
+        return;
+    }
+
     println!("Unknown IO type");
 }
 
@@ -85,6 +91,70 @@ fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> a
         let _ = handle.join();
     }
     println!("std_thread_buffer_io: {}(ms)", now.elapsed().as_millis());
+    Ok(())
+}
+
+fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String) -> anyhow::Result<()> {
+    let cores = std::thread::available_parallelism().unwrap();
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(usize::from(cores))
+        .enable_all().build()?;
+
+    async fn create_file(data_path: &str) -> anyhow::Result<()> {
+        println!("creating file: {:?}", data_path);
+        let file_path = data_path;
+        match tokio::fs::metadata(file_path).await {
+            Ok(_) => {
+            }
+            Err(e) if e.kind() == tokio::io::ErrorKind::NotFound => {
+                let _ = tokio::fs::File::create(file_path).await?;
+            }
+            Err(e) => {
+
+            }
+        }
+        Ok(())
+    }
+
+    let now = Instant::now();
+    let counter = Arc::new(AtomicUsize::new(0));
+    for idx in 0..usize::from(cores) {
+        let data_dir = data_dir.to_string();
+        let batch_bytes = batch_bytes.clone();
+        let counter = counter.clone();
+        runtime.spawn(async move {
+            let file_name = format!("{}.opendal_async_buffer_io.file", idx);
+            let file_path = format!("{}/{}", &data_dir, &file_name);
+            let _ = create_file(&file_path).await;
+
+            let mut builder = opendal::services::Fs::default();
+            builder.root(&data_dir);
+            let operator: opendal::Operator = opendal::Operator::new(builder).unwrap().finish();
+
+            let writer = operator
+                .writer_with(&file_name)
+                .append(true)
+                .await.unwrap();
+            let mut buf_write = tokio::io::BufWriter::new(writer);
+            for _ in 0..epoch {
+                if let Err(e) = buf_write.write_all(&batch_bytes).await {
+                    println!("Errors on writing data. err: {:#?}", e);
+                }
+            }
+            let _ = buf_write.flush().await;
+            counter.fetch_add(1, Ordering::SeqCst);
+            println!("[{:?}] finished", idx);
+        });
+    }
+
+    loop {
+        if counter.load(Ordering::SeqCst) == cores.get() {
+            break;
+        }
+        sleep(Duration::from_millis(100));
+    }
+
+    println!("tokio_async_buffer_io: {}(ms)", now.elapsed().as_millis());
     Ok(())
 }
 
