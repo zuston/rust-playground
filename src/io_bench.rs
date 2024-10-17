@@ -1,34 +1,19 @@
-use std::io::Write;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
 use bytes::Bytes;
 use clap::{App, Arg};
+use std::io::Write;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 use tokio::io::AsyncWriteExt;
 
 fn main() {
     let cli = App::new("io_bench")
-        .arg(
-            Arg::with_name("data_path")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("epoch")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("batch_bytes")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("io_bench_type")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("concurrency")
-                .takes_value(true),
-        )
+        .arg(Arg::with_name("data_path").takes_value(true))
+        .arg(Arg::with_name("epoch").takes_value(true))
+        .arg(Arg::with_name("batch_bytes").takes_value(true))
+        .arg(Arg::with_name("io_bench_type").takes_value(true))
+        .arg(Arg::with_name("concurrency").takes_value(true))
         .get_matches();
 
     let data_path = cli.value_of("data_path").unwrap();
@@ -59,7 +44,12 @@ fn main() {
     println!("Unknown IO type");
 }
 
-fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+fn std_thread_buffer_io(
+    epoch: usize,
+    batch_bytes: Bytes,
+    data_dir: String,
+    concurrency: usize,
+) -> anyhow::Result<()> {
     let cores = std::thread::available_parallelism().unwrap().get();
     let cores = concurrency;
 
@@ -82,7 +72,8 @@ fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, conc
             let file = std::fs::OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open(file_path).unwrap();
+                .open(file_path)
+                .unwrap();
             let mut buf_write = std::io::BufWriter::new(file);
             for _ in 0..epoch {
                 let _ = buf_write.write_all(&batch_bytes).unwrap();
@@ -100,26 +91,29 @@ fn std_thread_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, conc
     Ok(())
 }
 
-fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+fn opendal_async_buffer_io(
+    epoch: usize,
+    batch_bytes: Bytes,
+    data_dir: String,
+    concurrency: usize,
+) -> anyhow::Result<()> {
     let cores = std::thread::available_parallelism().unwrap().get();
     let cores = concurrency;
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(usize::from(cores))
-        .enable_all().build()?;
+        .enable_all()
+        .build()?;
 
     async fn create_file(data_path: &str) -> anyhow::Result<()> {
         println!("creating file: {:?}", data_path);
         let file_path = data_path;
         match tokio::fs::metadata(file_path).await {
-            Ok(_) => {
-            }
+            Ok(_) => {}
             Err(e) if e.kind() == tokio::io::ErrorKind::NotFound => {
                 let _ = tokio::fs::File::create(file_path).await?;
             }
-            Err(e) => {
-
-            }
+            Err(e) => {}
         }
         Ok(())
     }
@@ -139,10 +133,7 @@ fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, c
             builder.root(&data_dir);
             let operator: opendal::Operator = opendal::Operator::new(builder).unwrap().finish();
 
-            let writer = operator
-                .writer_with(&file_name)
-                .append(true)
-                .await.unwrap();
+            let writer = operator.writer_with(&file_name).append(true).await.unwrap();
             let mut buf_write = tokio::io::BufWriter::new(writer);
             for _ in 0..epoch {
                 if let Err(e) = buf_write.write_all(&batch_bytes).await {
@@ -166,26 +157,29 @@ fn opendal_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, c
     Ok(())
 }
 
-fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, concurrency: usize) -> anyhow::Result<()> {
+fn tokio_async_buffer_io(
+    epoch: usize,
+    batch_bytes: Bytes,
+    data_dir: String,
+    concurrency: usize,
+) -> anyhow::Result<()> {
     let cores = std::thread::available_parallelism().unwrap().get();
     let cores = concurrency;
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(cores)
-        .enable_all().build()?;
+        .enable_all()
+        .build()?;
 
     async fn create_file(data_path: &str) -> anyhow::Result<()> {
         println!("creating file: {:?}", data_path);
         let file_path = data_path;
         match tokio::fs::metadata(file_path).await {
-            Ok(_) => {
-            }
+            Ok(_) => {}
             Err(e) if e.kind() == tokio::io::ErrorKind::NotFound => {
                 let _ = tokio::fs::File::create(file_path).await?;
             }
-            Err(e) => {
-
-            }
+            Err(e) => {}
         }
         Ok(())
     }
@@ -202,7 +196,8 @@ fn tokio_async_buffer_io(epoch: usize, batch_bytes: Bytes, data_dir: String, con
             let file = tokio::fs::OpenOptions::new()
                 .append(true)
                 .open(file_path)
-                .await.unwrap();
+                .await
+                .unwrap();
             let mut buf_write = tokio::io::BufWriter::new(file);
             for _ in 0..epoch {
                 if let Err(e) = buf_write.write_all(&batch_bytes).await {
