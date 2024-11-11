@@ -22,3 +22,4 @@ bytes = { version = "1" }
 clap = "3.0.14"
 opendal = { version = "0.44.0", features = ["services-fs"] }
 crossbeam = "0.8.2"
+roaring = "0.10.6"
