@@ -27,6 +27,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::new(url_header.as_str())?;
 
+    let file_path = root_path;
     if let Ok(status) = client.get_file_info(file_path).await {
         match client.delete(file_path, false).await {
             Ok(_) => println!("deleted."),
