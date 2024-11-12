@@ -15,6 +15,10 @@ path = "src/io_async_cost.rs"
 name = "crossbeam_atomic_cell"
 path = "src/crossbeam_atomic_cell.rs"
 
+[[bin]]
+name = "hdfs_write"
+path = "src/hdfs.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 anyhow = { version = "1" }
@@ -23,3 +27,5 @@ clap = "3.0.14"
 opendal = { version = "0.44.0", features = ["services-fs"] }
 crossbeam = "0.8.2"
 roaring = "0.10.6"
+hdfs-native = "0.10.3"
+url = "2.5.3"
