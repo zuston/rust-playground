@@ -38,9 +38,6 @@ fn main() -> anyhow::Result<()> {
         Err(e) => {
             if e.kind() == io::ErrorKind::NotFound {
                 println!("There is no such file: {}", root_path);
-                let mut file = fs.open_file().write(true).create(true).open(root_path)?;
-                file.flush()?;
-                println!("Created the file: {}", root_path);
             }
         },
         _ => {
@@ -48,6 +45,10 @@ fn main() -> anyhow::Result<()> {
             println!("Removed the file: {}", root_path);
         }
     }
+
+    let mut file = fs.open_file().write(true).create(true).open(root_path)?;
+    file.flush()?;
+    println!("Created the file: {}", root_path);
 
     for idx in 0..batch {
         let mut f = fs.open_file().write(true).append(true).open(root_path)?;
