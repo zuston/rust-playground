@@ -19,6 +19,10 @@ path = "src/crossbeam_atomic_cell.rs"
 name = "hdfs_write"
 path = "src/hdfs.rs"
 
+[[bin]]
+name = "hdrs_write"
+path = "src/hdrs.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 anyhow = { version = "1" }
@@ -29,3 +33,4 @@ crossbeam = "0.8.2"
 roaring = "0.10.6"
 hdfs-native = "0.10.3"
 url = "2.5.3"
+hdrs = "0.3.2"
