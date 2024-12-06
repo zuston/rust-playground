@@ -23,6 +23,10 @@ path = "src/hdfs.rs"
 name = "hdrs_write"
 path = "src/hdrs.rs"
 
+[[bin]]
+name = "deamon"
+path = "src/deamon.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 anyhow = { version = "1" }
@@ -34,3 +38,4 @@ roaring = "0.10.6"
 hdfs-native = "0.10.3"
 url = "2.5.3"
 hdrs = "0.3.2"
+daemonize = "0.5.0"

@@ -1,8 +1,8 @@
-use std::io;
-use std::io::Write;
 use bytes::Bytes;
 use clap::{App, Arg};
 use hdrs::ClientBuilder;
+use std::io;
+use std::io::Write;
 use url::Url;
 
 fn main() -> anyhow::Result<()> {
@@ -30,16 +30,14 @@ fn main() -> anyhow::Result<()> {
 
     let bytes = Bytes::from(vec![0; batch_size]);
 
-    let fs =
-        ClientBuilder::new(url_header.as_str())
-            .connect()?;
+    let fs = ClientBuilder::new(url_header.as_str()).connect()?;
 
     match fs.metadata(root_path) {
         Err(e) => {
             if e.kind() == io::ErrorKind::NotFound {
                 println!("There is no such file: {}", root_path);
             }
-        },
+        }
         _ => {
             fs.remove_file(root_path)?;
             println!("Removed the file: {}", root_path);
