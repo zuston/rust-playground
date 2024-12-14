@@ -1809,6 +1809,7 @@ dependencies = [
  "daemonize",
  "hdfs-native",
  "hdrs",
+ "libc",
  "opendal",
  "roaring",
  "tokio",
