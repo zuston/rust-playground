@@ -34,7 +34,7 @@ path = "src/bytes_transfer.rs"
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 anyhow = { version = "1" }
-bytes = { version = "1" }
+bytes = { version = "1.9.0" }
 clap = "3.0.14"
 opendal = { version = "0.44.0", features = ["services-fs"] }
 crossbeam = "0.8.2"

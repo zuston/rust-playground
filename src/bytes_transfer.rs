@@ -8,6 +8,13 @@ use bytes::{BufMut, Bytes, BytesMut};
 fn main() {
     let bytes = create_1gb_bytes();
 
+
+    let mut new = BytesMut::new();
+    new.put(bytes);
+    let new = new.freeze();
+
+    sleep(Duration::from_millis(5000000));
+
     match get_resident_memory_size() {
         Ok(rss) => println!("Resident memory size: {} bytes", rss),
         Err(e) => eprintln!("Failed to get resident memory size: {}", e),
@@ -19,7 +26,6 @@ fn main() {
     // cloned.extend_from_slice(&*bytes);
 
     // this will zero copy of putting
-    cloned.put(bytes);
     let c = cloned.freeze();
 
     println!("----");
