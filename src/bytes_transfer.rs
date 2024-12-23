@@ -1,13 +1,12 @@
 extern crate libc;
 
+use bytes::{BufMut, Bytes, BytesMut};
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
-use bytes::{BufMut, Bytes, BytesMut};
 
 fn main() {
     let bytes = create_1gb_bytes();
-
 
     let mut new = BytesMut::new();
     new.put(bytes);
@@ -50,7 +49,6 @@ fn create_1gb_bytes() -> Bytes {
     buffer.freeze()
 }
 
-
 fn get_resident_memory_size() -> Result<usize, String> {
     // 获取当前进程的 PID
     let pid = std::process::id();
@@ -62,10 +60,7 @@ fn get_resident_memory_size() -> Result<usize, String> {
         .map_err(|e| e.to_string())?;
 
     if !output.status.success() {
-        return Err(format!(
-            "ps command failed with status: {}",
-            output.status
-        ));
+        return Err(format!("ps command failed with status: {}", output.status));
     }
 
     // 将输出转换为字符串并解析为 usize
