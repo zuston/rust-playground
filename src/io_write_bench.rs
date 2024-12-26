@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use tokio::io::AsyncWriteExt;
 
 fn main() {
-    let cli = App::new("io_bench")
+    let cli = App::new("io_write_bench")
         .arg(Arg::with_name("data_path").takes_value(true))
         .arg(Arg::with_name("epoch").takes_value(true))
         .arg(Arg::with_name("batch_bytes").takes_value(true))

@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "io_bench"
-path = "src/io_bench.rs"
+name = "io_write_bench"
+path = "src/io_write_bench.rs"
 
 [[bin]]
 name = "io_async_cost"
