@@ -39,6 +39,12 @@ path = "src/bytes_transfer.rs"
 name = "memory_profile"
 path = "src/memory_profile.rs"
 
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 0
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 anyhow = { version = "1" }
@@ -57,6 +63,6 @@ positioned-io = "0.3.3"
 tikv-jemalloc-ctl = { version = "0.6", features = ["use_std"] }
 tikv-jemallocator = "0.6"
 axum = "0.7.2"
-jemalloc_pprof = "0.6.0"
+jemalloc_pprof = { git = "https://github.com/erikgrinaker/rust-jemalloc-pprof.git", branch = "symbolize", features = ["symbolize"]}
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = { version = "0.6", features = ["profiling", "stats", "unprefixed_malloc_on_supported_platforms", "background_threads"] }
