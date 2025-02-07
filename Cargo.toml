@@ -39,6 +39,10 @@ path = "src/bytes_transfer.rs"
 name = "memory_profile"
 path = "src/memory_profile.rs"
 
+[[bin]]
+name = "hdrs_with_memory_profile"
+path = "src/hdrs_with_memory_profile.rs"
+
 [profile.dev]
 opt-level = 0
 
