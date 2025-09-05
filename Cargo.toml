@@ -70,3 +70,5 @@ axum = "0.7.2"
 jemalloc_pprof = { git = "https://github.com/erikgrinaker/rust-jemalloc-pprof.git", branch = "symbolize", features = ["symbolize"]}
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = { version = "0.6", features = ["profiling", "stats", "unprefixed_malloc_on_supported_platforms", "background_threads"] }
+candle-core = "0.9.1"
+candle-nn = "0.9.1"

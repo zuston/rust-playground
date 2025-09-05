@@ -1,5 +1,6 @@
 mod await_timeout;
 mod bitmap;
+mod candle;
 mod cast;
 mod closure;
 mod histogram;

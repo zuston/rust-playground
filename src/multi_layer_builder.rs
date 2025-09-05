@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod test {
     trait Handler {
@@ -56,7 +55,6 @@ mod test {
             println!("Metrics after handling");
         }
     }
-
 
     struct OperatorBuilder {
         handler: Box<dyn Handler>,
